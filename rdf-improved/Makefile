@@ -2,17 +2,45 @@ test_rdf           = $(wildcard test/rdf/*)
 test_trig          = $(patsubst test/rdf/%.xml, test/trig/%.trig,     $(test_rdf))
 test_jsonld        = $(patsubst test/rdf/%.xml, test/jsonld/%.jsonld, $(test_rdf))
 
-nordic_source      = ../../../Nordic44/Instances
-nordic_dirs       != /usr/bin/find $(nordic_source) -type d
+nordic_source      = /Users/krista/Development/repos/nordic44/Nordic44/instances
+
+debug-nordic:
+	@echo "Nordic source directory: $(nordic_source)"
+	@echo "Directory contents:"
+	@ls -l $(nordic_source)
+	@echo "Number of files:"
+	@ls $(nordic_source) | wc -l
+# On Mac/Linux replace:
+# nordic_dirs       != /usr/bin/find $(nordic_source) -type d
+# With:
+nordic_dirs       = $(shell find $(nordic_source) -type d)
+
 nordic_target      = instances/Nordic44
 nordic_target_dirs = $(subst $(nordic_source),$(nordic_target),$(nordic_dirs))
 nordic_ignore      = CDPSM_2_0/Nordic44_CPSM_01_MF.xml CDPSM_2_0/Nordic44_03_inc.xml CGMES_2_4/Nordic44_CGM_36f_MF.xml CGMES_2_4/Nordic44_CGM_38_CO.xml
 nordic_ignore2     = $(patsubst %, $(nordic_source)/%, $(nordic_ignore))
-nordic_rdf         = $(filter-out $(nordic_ignore2), $(wildcard $(nordic_source)/*_2_*/*.xml))
+# This line is looking for XML files in subdirectories that has structure _2_ and xml extension, it is not the case with our puvblic Nordic44
+# nordic_rdf         = $(filter-out $(nordic_ignore2), $(wildcard $(nordic_source)/*_2_*/*.xml))
+#Instead , I am modifying this lo recursively look for files with .xml extension
+nordic_rdf = nordic_rdf = $(filter-out $(nordic_ignore2), $(shell find $(nordic_source) -name "*.xml"))
+# Verify with this debug tools, run ```make debug-nordic-files```
+debug-nordic-files:
+	@echo "Total XML files found:"
+	@echo $(words $(nordic_rdf))
+	@echo "First few XML files:"
+	@for file in $(wordlist 1,10,$(nordic_rdf)); do echo $$file; done
+
+
+
+
 nordic_trig        = $(subst .xml,.trig, $(subst $(nordic_source),$(nordic_target), $(nordic_rdf)))
 
 entsoe_source      = ../../../CGMES-SHACL/ENTSO-E_Test_Configurations_v3.0.2/v3.0
-entsoe_dirs       != /usr/bin/find $(entsoe_source) -type d
+# On Mac/Linux replace:
+# entsoe_dirs       != /usr/bin/find $(entsoe_source) -type d
+# With:
+entsoe_dirs       = $(shell find $(entsoe_source) -type d)
+
 entsoe_target      = instances/ENTSO-E_Test_Configurations_v3.0.2
 entsoe_target_dirs = $(subst $(entsoe_source),$(entsoe_target),$(entsoe_dirs))
 entsoe_rdf         = $(wildcard $(entsoe_source)/*/*/*.xml) $(wildcard $(entsoe_source)/*/*/*/*.xml)
@@ -50,23 +78,43 @@ fix-datatypes-and-model.ru: fix-datatypes-old.ru fix-model.ru
 test: $(test_trig)
 rm-test:
 	rm -f $(test_trig)
-test/trig/%.trig: test/rdf/%.xml | cim-trig.pl fix-datatypes-and-model.ru
-	perl cim-trig.pl -r $^ > temp.trig
-	update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
-	rm temp.trig
+#test/trig/%.trig: test/rdf/%.xml | cim-trig.pl fix-datatypes-and-model.ru
+#	perl cim-trig.pl -r $^ > temp.trig
+# On Mac/Linux Replace:
+#   update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+
+# With:
+#	./update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+
+#TODO: where is update??
+test/trig/%.trig: test/rdf/%.xml | cim-trig.pl
+	perl cim-trig.pl -r $< > $@
+# Or if it's a shell script
+#	bash update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+#		update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+
+		rm temp.trig
 
 jsonld: $(test_jsonld)
 rm-jsonld:
 	rm -f $(test_jsonld)
 test/jsonld/%.jsonld: test/trig/%.trig
-	riot.bat -formatted jsonld $^ | jsonld compact -c https://rawgit2.com/Sveino/Inst4CIM-KG/develop/rdf-improved/cim-context-old.jsonld > $@
+# On Mac/Linux Replace:
+#	riot.bat -formatted jsonld $^ | jsonld compact -c https://rawgit2.com/Sveino/Inst4CIM-KG/develop/rdf-improved/cim-context-old.jsonld > $@
 
+#With:
+#	riot -formatted jsonld $^ | jsonld compact -c https://rawgit2.com/Sveino/Inst4CIM-KG/develop/rdf-improved/cim-context-old.jsonld > $@
+	riot -formatted jsonld $< > $@
 nordic: $(nordic_trig)
 rm-nordic:
 	rm -f $(nordic_trig)
 $(nordic_target)/%.trig: $(nordic_source)/%.xml | cim-trig.pl fix-datatypes-and-model.ru
 	perl cim-trig.pl -r $^ > temp.trig
-	update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+# On Mac/Linux Replace:
+#	update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+
+#With:
+	update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
 	rm temp.trig
 
 entsoe: $(entsoe_trig)
@@ -74,7 +122,12 @@ rm-entsoe:
 	rm -f $(entsoe_trig)
 $(entsoe_target)/%.trig: $(entsoe_source)/%.xml | cim-trig.pl fix-datatypes-and-model.ru
 	perl cim-trig.pl -r $^ > temp.trig
-	update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+# On Mac/Linux Replace:
+#	update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+
+#With:
+	update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+
 	rm temp.trig
 
 multiplied: $(multiplied_trig)

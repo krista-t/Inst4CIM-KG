@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:cim="http://iec.ch/TC57/CIM100#"
+         xmlns:md="http://iec.ch/TC57/61970-552/ModelDescription/1#">
+  <md:FullModel rdf:about="urn:uuid:12345678-1234-1234-1234-123456789012">
+    <md:Model.created>2023-06-15T14:30:00Z</md:Model.created>
+    <md:Model.scenarioTime>2023-06-15T14:30:00Z</md:Model.scenarioTime>
+    <md:Model.modelingAuthoritySet>http://example.org/power-grid-authority</md:Model.modelingAuthoritySet>
+    <md:Model.profile>http://example.org/steady-state-hypothesis</md:Model.profile>
+    <md:Model.version>1.0</md:Model.version>
+    
+    <cim:PowerSystem>
+      <cim:Substation rdf:about="urn:uuid:87654321-4321-4321-4321-210987654321">
+        <cim:Substation.name>Central Power Substation</cim:Substation.name>
+        <cim:Substation.region>North Region</cim:Substation.region>
+      </cim:Substation>
+    </cim:PowerSystem>
+  </md:FullModel>
+</rdf:RDF>

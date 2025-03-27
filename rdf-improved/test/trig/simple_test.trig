@@ -1,0 +1,21 @@
+BASE   <http://example.org/power-grid-authority#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX cim: <http://iec.ch/TC57/CIM100#>
+PREFIX md: <http://iec.ch/TC57/61970-552/ModelDescription/1#>
+
+<urn:uuid:12345678-1234-1234-1234-123456789012> { # model graph
+
+<urn:uuid:12345678-1234-1234-1234-123456789012>
+        rdf:type                       md:FullModel;
+        md:Model.created               "2023-06-15T14:30:00Z";
+        md:Model.scenarioTime          "2023-06-15T14:30:00Z";
+        md:Model.modelingAuthoritySet  "http://example.org/power-grid-authority";
+        md:Model.profile               "http://example.org/steady-state-hypothesis";
+        md:Model.version               "1.0";
+        cim:PowerSystem                <urn:uuid:87654321-4321-4321-4321-210987654321> .
+
+<urn:uuid:87654321-4321-4321-4321-210987654321>
+        rdf:type               cim:Substation;
+        cim:Substation.name    "Central Power Substation";
+        cim:Substation.region  "North Region" .
+}

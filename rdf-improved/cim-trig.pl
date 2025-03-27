@@ -12,8 +12,17 @@
 
 use warnings;
 use autodie;
-use UUID qw(uuid4); # https://metacpan.org/pod/UUID
+#use UUID qw(uuid4); # https://metacpan.org/pod/UUID
   # CIM UUIDs are version 4: https://github.com/Sveino/Spec4CIM-KG/issues/10
+
+# To this:
+use Data::UUID; #https://metacpan.org/pod/Data::UUID
+# created the Data::UUID object (the $ug variable) before using it.
+my $ug = Data::UUID->new;
+
+# # And if on Mac replace any calls to uuid4() with:
+# $ug->create_str();
+
 use Getopt::Std;
 our $opt_r;
 getopts("r");
@@ -55,8 +64,11 @@ if ($model_type eq "dm:DifferenceModel") {
 \s*<dm:forwardDifferences rdf:parseType="Statements">(.*?)</dm:forwardDifferences>
 (.*)}s
     or die "Can't find dm:reverseDifferences FOLLOWED BY dm:forwardDifferences\n";
-  my $reverse_uri = "urn:uuid:" . uuid4();
-  my $forward_uri = "urn:uuid:" . uuid4();
+  # my $reverse_uri = "urn:uuid:" . uuid4();
+  # my $forward_uri = "urn:uuid:" . uuid4();
+  # For Mac
+  my $reverse_uri = "urn:uuid:" . $ug->create_str();;
+  my $forward_uri = "urn:uuid:" . $ug->create_str();;
   my $reverse_ref = qq{<dm:reverseDifferences rdf:resource="$reverse_uri"/>};
   my $forward_ref = qq{<dm:forwardDifferences rdf:resource="$forward_uri"/>};
   $model = ttl_insert_after_prefixes
@@ -90,8 +102,13 @@ sub ttl {
   open ($fh,">$tmp.rdf");
   print $fh $input;
   close $fh;
-  system ($opt_r ? "riot.bat --syntax=rdfxml --stream=ttl $tmp.rdf > $tmp.ttl":
-          "owl.bat write --keepUnusedPrefixes -i rdfxml $tmp.rdf $tmp.ttl");
+# For Win use this:
+#  system ($opt_r ? "riot.bat --syntax=rdfxml --stream=ttl $tmp.rdf > $tmp.ttl":
+#          "owl.bat write --keepUnusedPrefixes -i rdfxml $tmp.rdf $tmp.ttl");
+# For Mac use this:
+  system ($opt_r ? "riot --syntax=rdfxml --stream=ttl $tmp.rdf > $tmp.ttl":
+          "riot --syntax=rdfxml --formatted $tmp.rdf > $tmp.ttl");
+          
   open ($fh, "$tmp.ttl");
   my $output = <$fh>; # $/ is undef, so it slurps
   close $fh;

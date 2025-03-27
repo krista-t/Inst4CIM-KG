@@ -1,0 +1,28 @@
+{
+    "@id": "urn:uuid:12345678-1234-1234-1234-123456789012",
+    "@graph": [
+        {
+            "@id": "urn:uuid:87654321-4321-4321-4321-210987654321",
+            "cim:Substation.region": "North Region",
+            "cim:Substation.name": "Central Power Substation",
+            "@type": "cim:Substation"
+        },
+        {
+            "@id": "urn:uuid:12345678-1234-1234-1234-123456789012",
+            "cim:PowerSystem": {
+                "@id": "urn:uuid:87654321-4321-4321-4321-210987654321"
+            },
+            "md:Model.version": "1.0",
+            "md:Model.profile": "http://example.org/steady-state-hypothesis",
+            "md:Model.modelingAuthoritySet": "http://example.org/power-grid-authority",
+            "md:Model.scenarioTime": "2023-06-15T14:30:00Z",
+            "md:Model.created": "2023-06-15T14:30:00Z",
+            "@type": "md:FullModel"
+        }
+    ],
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "cim": "http://iec.ch/TC57/CIM100#",
+        "md": "http://iec.ch/TC57/61970-552/ModelDescription/1#"
+    }
+}
