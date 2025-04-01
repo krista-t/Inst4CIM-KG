@@ -5,46 +5,12 @@ test_jsonld        = $(patsubst test/rdf/%.xml, test/jsonld/%.jsonld, $(test_rdf
 
 # IMPORTANT: Modify this line to match the exact path to your instances directory
 # You might want to use an absolute path or a relative path from the Makefile location
-#nordic_source      = /Users/krista/Development/repos/nordic44/Nordic44/instances
+nordic_source      = /Users/krista/Downloads/Nordic44-main/instances
 # Alternative: If the Makefile is in the same directory as the instances folder
 # nordic_source      = ./instances
 
 ##### TODO: make path to github repo instead of local path
-# GitHub repository for Nordic44
 
-GITHUB_REPO = https://raw.githubusercontent.com/statnett/Nordic44/main
-CACHE_DIR = .cache/Nordic44
-
-nordic_source = $(CACHE_DIR)/Nordic44/instances
-
-# Create cache directory when needed
-$(nordic_source):
-	@mkdir -p $(nordic_source)
-	@echo "Created cache directory: $(nordic_source)"
-	@mkdir -p $(nordic_source)/NetworkCode
-	@mkdir -p $(nordic_source)/Enterprise
-	@mkdir -p $(nordic_source)/Grid
-
-# Rule to download files when needed - adjusted path
-$(nordic_source)/%.xml:
-	@mkdir -p $(dir $@)
-	@echo "Attempting to download: $(GITHUB_REPO)/Nordic44/instances/$(@:$(nordic_source)/%=%)"
-	@curl -s $(GITHUB_REPO)/Nordic44/instances/$(@:$(nordic_source)/%=%) -o $@ || \
-	  (echo "Failed to download file. Trying alternate path..."; \
-	   curl -s $(GITHUB_REPO)/instances/$(@:$(nordic_source)/%=%) -o $@ || \
-	   (echo "Both download attempts failed for $(@:$(nordic_source)/%=%)"; exit 1))
-
-# Optional helper 
-update-nordic:
-	@echo "Updating Nordic44 files from GitHub..."
-	@rm -rf $(CACHE_DIR)
-	@mkdir -p $(nordic_source)
-	@echo "Nordic44 files will be downloaded as needed"
-
-clean-nordic:
-	@echo "Cleaning Nordic44 cached files..."
-	@rm -rf $(CACHE_DIR)
-	@echo "Nordic44 cache cleaned"
 ########
 
 # On Mac/Linux replace:
@@ -54,14 +20,16 @@ nordic_dirs       = $(shell find $(nordic_source) -type d)
 
 # Modify the target directory to match your project structure
 nordic_target      = instances/Nordic44
-nordic_target_dirs = $(subst $(nordic_source),$(nordic_target),$(nordic_dirs))
+# nordic_target_dirs = $(subst $(nordic_source),$(nordic_target),$(nordic_dirs))
 # This line finds all XML files, excluding specific files
 # You may want to adjust the ignore list based on your specific requirements
-nordic_ignore      = CDPSM_2_0/Nordic44_CPSM_01_MF.xml CDPSM_2_0/Nordic44_03_inc.xml CGMES_2_4/Nordic44_CGM_36f_MF.xml CGMES_2_4/Nordic44_CGM_38_CO.xml
+# Modify the ignore list to comprehensively ignore manifest.xml files
+nordic_ignore      = CDPSM_2_0/Nordic44_CPSM_01_MF.xml CDPSM_2_0/Nordic44_03_inc.xml CGMES_2_4/Nordic44_CGM_36f_MF.xml CGMES_2_4/Nordic44_CGM_38_CO.xml **/manifest.xml
 nordic_ignore2     = $(patsubst %, $(nordic_source)/%, $(nordic_ignore))
 
 # Recursively find XML files, excluding ignored files
 nordic_rdf = $(filter-out $(nordic_ignore2), $(shell find $(nordic_source) -name "*.xml"))
+
 # Changed from this:
 #nordic_trig        = $(subst .xml,.trig, $(subst $(nordic_source),$(nordic_target), $(nordic_rdf)))
 # COMMENT: Convert XML paths to TRIG paths
@@ -153,17 +121,31 @@ test/jsonld/%.jsonld: test/trig/%.trig
 #With:
 #	riot -formatted jsonld $^ | jsonld compact -c https://rawgit2.com/Sveino/Inst4CIM-KG/develop/rdf-improved/cim-context-old.jsonld > $@
 	riot -formatted jsonld $< > $@
-nordic: $(nordic_trig)
-rm-nordic:
-	rm -f $(nordic_trig)
+# TODO: commented out nordic: $(nordic_trig)
+nordic: create-nordic-dirs $(filter-out %/manifest.trig, $(nordic_trig))
+
+create-nordic-dirs:
+	@mkdir -p $(sort $(dir $(nordic_trig)))
+
+# Modify the pattern rule to skip manifest.xml files
 $(nordic_target)/%.trig: $(nordic_source)/%.xml | cim-trig.pl fix-datatypes-and-model.ru
+ifneq ($(notdir $<),manifest.xml)
+	@mkdir -p $(dir $@)
 	perl cim-trig.pl -r $^ > temp.trig
+	update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+	rm temp.trig
+endif
+####	
+#rm-nordic:
+#	rm -f $(nordic_trig)
+#$(nordic_target)/%.trig: $(nordic_source)/%.xml | cim-trig.pl fix-datatypes-and-model.ru
+#	perl cim-trig.pl -r $^ > temp.trig
 # On Mac/Linux Replace:
 #	update.bat --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
 
 #With:
-	update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
-	rm temp.trig
+#	update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
+#	rm temp.trig
 
 entsoe: $(entsoe_trig)
 rm-entsoe:

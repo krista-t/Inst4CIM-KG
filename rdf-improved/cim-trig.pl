@@ -43,7 +43,11 @@ my $xml = <STDIN>;
 ## remove parasitic underscore from start of relative URLs
 # $xml =~ s{(rdf:(about|resource)=\"#)_+}{$1}g;
 
+#fix http://iec.ch/TC57/CIM/CIM100# -> http://iec.ch/TC57/CIM100# , this is processed before the transformation
+$xml =~ s{http://iec.ch/TC57/CIM/CIM100#}{http://iec.ch/TC57/CIM100#}g;
 # Add base
+
+
 my ($rdf_open, $body, $rdf_close) =
   $xml =~ m{(.*?<rdf:RDF.*?>)(.*?)(</rdf:RDF>)}s
   or die "Can't find rdf:RDF element\n";
@@ -53,7 +57,6 @@ my ($base) =
 $rdf_open =~ s{xml:base="http://iec.ch/TC57/CIM100"}{}; # inappropriate for base of instance URLs
 $rdf_open =~ s{<rdf:RDF}{<rdf:RDF xml:base="$base#"};
 
-# TODO: fix http://iec.ch/TC57/CIM/CIM100# -> http://iec.ch/TC57/CIM100#
 
 
 # extract Model element and its attributes
