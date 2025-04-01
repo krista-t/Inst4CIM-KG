@@ -12,6 +12,7 @@
 
 use warnings;
 use autodie;
+
 #use UUID qw(uuid4); # https://metacpan.org/pod/UUID
   # CIM UUIDs are version 4: https://github.com/Sveino/Spec4CIM-KG/issues/10
 
@@ -51,6 +52,9 @@ my ($base) =
   or die "Can't find md:Model.modelingAuthoritySet\n";
 $rdf_open =~ s{xml:base="http://iec.ch/TC57/CIM100"}{}; # inappropriate for base of instance URLs
 $rdf_open =~ s{<rdf:RDF}{<rdf:RDF xml:base="$base#"};
+
+# TODO: fix http://iec.ch/TC57/CIM/CIM100# -> http://iec.ch/TC57/CIM100#
+
 
 # extract Model element and its attributes
 my ($model, $model_type, $model_uri) =

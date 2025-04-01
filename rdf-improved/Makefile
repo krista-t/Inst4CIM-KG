@@ -2,28 +2,78 @@ test_rdf           = $(wildcard test/rdf/*)
 test_trig          = $(patsubst test/rdf/%.xml, test/trig/%.trig,     $(test_rdf))
 test_jsonld        = $(patsubst test/rdf/%.xml, test/jsonld/%.jsonld, $(test_rdf))
 
-nordic_source      = /Users/krista/Development/repos/nordic44/Nordic44/instances
 
+# IMPORTANT: Modify this line to match the exact path to your instances directory
+# You might want to use an absolute path or a relative path from the Makefile location
+#nordic_source      = /Users/krista/Development/repos/nordic44/Nordic44/instances
+# Alternative: If the Makefile is in the same directory as the instances folder
+# nordic_source      = ./instances
+
+##### TODO: make path to github repo instead of local path
+# GitHub repository for Nordic44
+
+GITHUB_REPO = https://raw.githubusercontent.com/statnett/Nordic44/main
+CACHE_DIR = .cache/Nordic44
+
+nordic_source = $(CACHE_DIR)/Nordic44/instances
+
+# Create cache directory when needed
+$(nordic_source):
+	@mkdir -p $(nordic_source)
+	@echo "Created cache directory: $(nordic_source)"
+	@mkdir -p $(nordic_source)/NetworkCode
+	@mkdir -p $(nordic_source)/Enterprise
+	@mkdir -p $(nordic_source)/Grid
+
+# Rule to download files when needed - adjusted path
+$(nordic_source)/%.xml:
+	@mkdir -p $(dir $@)
+	@echo "Attempting to download: $(GITHUB_REPO)/Nordic44/instances/$(@:$(nordic_source)/%=%)"
+	@curl -s $(GITHUB_REPO)/Nordic44/instances/$(@:$(nordic_source)/%=%) -o $@ || \
+	  (echo "Failed to download file. Trying alternate path..."; \
+	   curl -s $(GITHUB_REPO)/instances/$(@:$(nordic_source)/%=%) -o $@ || \
+	   (echo "Both download attempts failed for $(@:$(nordic_source)/%=%)"; exit 1))
+
+# Optional helper 
+update-nordic:
+	@echo "Updating Nordic44 files from GitHub..."
+	@rm -rf $(CACHE_DIR)
+	@mkdir -p $(nordic_source)
+	@echo "Nordic44 files will be downloaded as needed"
+
+clean-nordic:
+	@echo "Cleaning Nordic44 cached files..."
+	@rm -rf $(CACHE_DIR)
+	@echo "Nordic44 cache cleaned"
+########
+
+# On Mac/Linux replace:
+# nordic_dirs       != /usr/bin/find $(nordic_source) -type d
+# With:
+nordic_dirs       = $(shell find $(nordic_source) -type d)
+
+# Modify the target directory to match your project structure
+nordic_target      = instances/Nordic44
+nordic_target_dirs = $(subst $(nordic_source),$(nordic_target),$(nordic_dirs))
+# This line finds all XML files, excluding specific files
+# You may want to adjust the ignore list based on your specific requirements
+nordic_ignore      = CDPSM_2_0/Nordic44_CPSM_01_MF.xml CDPSM_2_0/Nordic44_03_inc.xml CGMES_2_4/Nordic44_CGM_36f_MF.xml CGMES_2_4/Nordic44_CGM_38_CO.xml
+nordic_ignore2     = $(patsubst %, $(nordic_source)/%, $(nordic_ignore))
+
+# Recursively find XML files, excluding ignored files
+nordic_rdf = $(filter-out $(nordic_ignore2), $(shell find $(nordic_source) -name "*.xml"))
+# Changed from this:
+#nordic_trig        = $(subst .xml,.trig, $(subst $(nordic_source),$(nordic_target), $(nordic_rdf)))
+# COMMENT: Convert XML paths to TRIG paths
+nordic_trig        = $(patsubst $(nordic_source)/%.xml,$(nordic_target)/%.trig,$(nordic_rdf))
+# Add these targets to help diagnose path and file issues
 debug-nordic:
 	@echo "Nordic source directory: $(nordic_source)"
 	@echo "Directory contents:"
 	@ls -l $(nordic_source)
 	@echo "Number of files:"
 	@ls $(nordic_source) | wc -l
-# On Mac/Linux replace:
-# nordic_dirs       != /usr/bin/find $(nordic_source) -type d
-# With:
-nordic_dirs       = $(shell find $(nordic_source) -type d)
 
-nordic_target      = instances/Nordic44
-nordic_target_dirs = $(subst $(nordic_source),$(nordic_target),$(nordic_dirs))
-nordic_ignore      = CDPSM_2_0/Nordic44_CPSM_01_MF.xml CDPSM_2_0/Nordic44_03_inc.xml CGMES_2_4/Nordic44_CGM_36f_MF.xml CGMES_2_4/Nordic44_CGM_38_CO.xml
-nordic_ignore2     = $(patsubst %, $(nordic_source)/%, $(nordic_ignore))
-# This line is looking for XML files in subdirectories that has structure _2_ and xml extension, it is not the case with our puvblic Nordic44
-# nordic_rdf         = $(filter-out $(nordic_ignore2), $(wildcard $(nordic_source)/*_2_*/*.xml))
-#Instead , I am modifying this lo recursively look for files with .xml extension
-nordic_rdf = nordic_rdf = $(filter-out $(nordic_ignore2), $(shell find $(nordic_source) -name "*.xml"))
-# Verify with this debug tools, run ```make debug-nordic-files```
 debug-nordic-files:
 	@echo "Total XML files found:"
 	@echo $(words $(nordic_rdf))
@@ -31,9 +81,7 @@ debug-nordic-files:
 	@for file in $(wordlist 1,10,$(nordic_rdf)); do echo $$file; done
 
 
-
-
-nordic_trig        = $(subst .xml,.trig, $(subst $(nordic_source),$(nordic_target), $(nordic_rdf)))
+	
 
 entsoe_source      = ../../../CGMES-SHACL/ENTSO-E_Test_Configurations_v3.0.2/v3.0
 # On Mac/Linux replace:
