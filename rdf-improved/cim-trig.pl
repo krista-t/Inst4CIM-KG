@@ -45,9 +45,8 @@ my $xml = <STDIN>;
 
 #fix http://iec.ch/TC57/CIM/CIM100# -> http://iec.ch/TC57/CIM100# , this is processed before the transformation
 $xml =~ s{http://iec.ch/TC57/CIM/CIM100#}{http://iec.ch/TC57/CIM100#}g;
+
 # Add base
-
-
 my ($rdf_open, $body, $rdf_close) =
   $xml =~ m{(.*?<rdf:RDF.*?>)(.*?)(</rdf:RDF>)}s
   or die "Can't find rdf:RDF element\n";
