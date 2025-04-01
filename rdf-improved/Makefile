@@ -1,13 +1,11 @@
-test_rdf           = $(wildcard test/rdf/*)
-test_trig          = $(patsubst test/rdf/%.xml, test/trig/%.trig,     $(test_rdf))
-test_jsonld        = $(patsubst test/rdf/%.xml, test/jsonld/%.jsonld, $(test_rdf))
+test_rdf = $(wildcard test/rdf/*)
+test_trig = $(patsubst test/rdf/%.xml, test/trig/%.trig,     $(test_rdf))
+test_jsonld = $(patsubst test/rdf/%.xml, test/jsonld/%.jsonld, $(test_rdf))
 
 
 # IMPORTANT: Modify this line to match the exact path to your instances directory
-# You might want to use an absolute path or a relative path from the Makefile location
-nordic_source      = /Users/krista/Downloads/Nordic44-main/instances
-# Alternative: If the Makefile is in the same directory as the instances folder
-# nordic_source      = ./instances
+nordic_source = /Users/krista/Downloads/Nordic44-main/instances
+
 
 ##### TODO: make path to github repo instead of local path
 
@@ -16,24 +14,27 @@ nordic_source      = /Users/krista/Downloads/Nordic44-main/instances
 # On Mac/Linux replace:
 # nordic_dirs       != /usr/bin/find $(nordic_source) -type d
 # With:
-nordic_dirs       = $(shell find $(nordic_source) -type d)
+nordic_dirs = $(shell find $(nordic_source) -type d)
 
 # Modify the target directory to match your project structure
-nordic_target      = instances/Nordic44
+nordic_target = instances/Nordic44
 # nordic_target_dirs = $(subst $(nordic_source),$(nordic_target),$(nordic_dirs))
-# This line finds all XML files, excluding specific files
-# You may want to adjust the ignore list based on your specific requirements
-# Modify the ignore list to comprehensively ignore manifest.xml files
-nordic_ignore      = CDPSM_2_0/Nordic44_CPSM_01_MF.xml CDPSM_2_0/Nordic44_03_inc.xml CGMES_2_4/Nordic44_CGM_36f_MF.xml CGMES_2_4/Nordic44_CGM_38_CO.xml **/manifest.xml
-nordic_ignore2     = $(patsubst %, $(nordic_source)/%, $(nordic_ignore))
+
+# Added ignore manifest.xml files
+nordic_ignore = CDPSM_2_0/Nordic44_CPSM_01_MF.xml CDPSM_2_0/Nordic44_03_inc.xml CGMES_2_4/Nordic44_CGM_36f_MF.xml CGMES_2_4/Nordic44_CGM_38_CO.xml **/manifest.xml 
+# Added networkcode files to ignore
+nordic_networkcode_files = $(shell find $(nordic_source)/NetworkCode/cimxml -name "*.xml" 2>/dev/null)
+
+nordic_ignore2 = $(patsubst %, $(nordic_source)/%, $(nordic_ignore)) $(nordic_networkcode_files) #networkcode files as they produce error now
+
 
 # Recursively find XML files, excluding ignored files
 nordic_rdf = $(filter-out $(nordic_ignore2), $(shell find $(nordic_source) -name "*.xml"))
 
 # Changed from this:
-#nordic_trig        = $(subst .xml,.trig, $(subst $(nordic_source),$(nordic_target), $(nordic_rdf)))
+#nordic_trig  = $(subst .xml,.trig, $(subst $(nordic_source),$(nordic_target), $(nordic_rdf)))
 # COMMENT: Convert XML paths to TRIG paths
-nordic_trig        = $(patsubst $(nordic_source)/%.xml,$(nordic_target)/%.trig,$(nordic_rdf))
+nordic_trig = $(patsubst $(nordic_source)/%.xml,$(nordic_target)/%.trig,$(nordic_rdf))
 # Add these targets to help diagnose path and file issues
 debug-nordic:
 	@echo "Nordic source directory: $(nordic_source)"
@@ -51,23 +52,23 @@ debug-nordic-files:
 
 	
 
-entsoe_source      = ../../../CGMES-SHACL/ENTSO-E_Test_Configurations_v3.0.2/v3.0
+entsoe_source  = ../../../CGMES-SHACL/ENTSO-E_Test_Configurations_v3.0.2/v3.0
 # On Mac/Linux replace:
-# entsoe_dirs       != /usr/bin/find $(entsoe_source) -type d
+# entsoe_dirs != /usr/bin/find $(entsoe_source) -type d
 # With:
-entsoe_dirs       = $(shell find $(entsoe_source) -type d)
+entsoe_dirs = $(shell find $(entsoe_source) -type d)
 
-entsoe_target      = instances/ENTSO-E_Test_Configurations_v3.0.2
+entsoe_target = instances/ENTSO-E_Test_Configurations_v3.0.2
 entsoe_target_dirs = $(subst $(entsoe_source),$(entsoe_target),$(entsoe_dirs))
-entsoe_rdf         = $(wildcard $(entsoe_source)/*/*/*.xml) $(wildcard $(entsoe_source)/*/*/*/*.xml)
-entsoe_trig        = $(subst .xml,.trig, $(subst $(entsoe_source),$(entsoe_target), $(entsoe_rdf)))
+entsoe_rdf  = $(wildcard $(entsoe_source)/*/*/*.xml) $(wildcard $(entsoe_source)/*/*/*/*.xml)
+entsoe_trig = $(subst .xml,.trig, $(subst $(entsoe_source),$(entsoe_target), $(entsoe_rdf)))
 
 multiplied_source  = ../../instance-multiplied
 multiplied_target  = instances/multiplied
-multiplied_rdf     = $(wildcard $(multiplied_source)/*.xml)
-multiplied_trig    = $(subst .xml,.trig, $(subst $(multiplied_source),$(multiplied_target), $(multiplied_rdf)))
+multiplied_rdf = $(wildcard $(multiplied_source)/*.xml)
+multiplied_trig  = $(subst .xml,.trig, $(subst $(multiplied_source),$(multiplied_target), $(multiplied_rdf)))
 
-zip                = ../../instance-zipped
+zip = ../../instance-zipped
 
 all:
 	@echo targets: context, dirs, zips, test, jsonld, nordic, entsoe, multiplied, rm-test, rm-jsonld, rm-nordic, rm-entsoe, rm-multiplied, clean
@@ -102,7 +103,7 @@ rm-test:
 # With:
 #	./update --update=fix-datatypes-and-model.ru --data=temp.trig --dump > $@
 
-#TODO: where is update??
+#TODO:  update??
 test/trig/%.trig: test/rdf/%.xml | cim-trig.pl
 	perl cim-trig.pl -r $< > $@
 # Or if it's a shell script
@@ -121,11 +122,11 @@ test/jsonld/%.jsonld: test/trig/%.trig
 #With:
 #	riot -formatted jsonld $^ | jsonld compact -c https://rawgit2.com/Sveino/Inst4CIM-KG/develop/rdf-improved/cim-context-old.jsonld > $@
 	riot -formatted jsonld $< > $@
-# TODO: commented out nordic: $(nordic_trig)
+# TODO: I commented out this -> nordic: $(nordic_trig)
 nordic: create-nordic-dirs $(filter-out %/manifest.trig, $(nordic_trig))
 
 create-nordic-dirs:
-	@mkdir -p $(sort $(dir $(nordic_trig)))
+	@mkdir -p $(sort $(dir $(nordic_trig))) 
 
 # Modify the pattern rule to skip manifest.xml files
 $(nordic_target)/%.trig: $(nordic_source)/%.xml | cim-trig.pl fix-datatypes-and-model.ru
